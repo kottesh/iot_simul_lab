@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = './build/arduino.avr.uno/iot_cat.ino.hex'
+elf = './build/arduino.avr.uno/iot_cat.ino.elf'
+

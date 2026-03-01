@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "author": "Shree Kottes",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-breadboard-half", "id": "bb1", "top": 141, "left": 175.6, "attrs": {} },
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 58.2, "left": -240.6, "attrs": {} },
+    {
+      "type": "wokwi-stepper-motor",
+      "id": "stepper1",
+      "top": -82.79,
+      "left": 202.03,
+      "attrs": { "size": "17" }
+    },
+    { "type": "wokwi-a4988", "id": "drv1", "top": -33.6, "left": 62.4, "attrs": {} },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": 380.8,
+      "left": 197.6,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 563,
+      "left": 172.8,
+      "attrs": { "color": "green", "xray": "1" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 563,
+      "left": 268.8,
+      "attrs": { "color": "green", "xray": "1" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn3",
+      "top": 563,
+      "left": 364.8,
+      "attrs": { "color": "green", "xray": "1" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn4",
+      "top": 563,
+      "left": 451.2,
+      "attrs": { "color": "green", "xray": "1" }
+    }
+  ],
+  "connections": [
+    [ "uno:5V", "bb1:bp.1", "red", [ "v0" ] ],
+    [ "uno:GND.2", "bb1:bn.1", "black", [ "v0" ] ],
+    [ "lcd1:GND", "bb1:bn.2", "black", [ "v-48", "h19.2", "v-46.7" ] ],
+    [ "lcd1:VCC", "bb1:bp.3", "red", [ "h-9.6", "v-47.9", "h36.8" ] ],
+    [ "lcd1:SCL", "uno:A5", "green", [ "h0" ] ],
+    [ "lcd1:SDA", "uno:A4", "green", [ "h0" ] ],
+    [ "drv1:ENABLE", "uno:10", "green", [ "h-153.6", "v96" ] ],
+    [ "drv1:RESET", "uno:11", "green", [ "h-163.2", "v57.6" ] ],
+    [ "drv1:STEP", "uno:8", "green", [ "h0" ] ],
+    [ "drv1:DIR", "uno:9", "green", [ "h0" ] ],
+    [ "drv1:GND.1", "bb1:bn.4", "black", [ "v278.48", "h123.35" ] ],
+    [ "drv1:GND.2", "bb1:bn.5", "black", [ "h-9.45", "v393.68", "h142.4" ] ],
+    [ "drv1:VDD", "bb1:bp.2", "green", [ "h9.75", "v336.08", "h76.8", "v-9.6", "h17.6" ] ],
+    [ "stepper1:A-", "drv1:2B", "green", [ "h-134.4", "v-105.68" ] ],
+    [ "stepper1:A+", "drv1:2A", "green", [ "v9.6", "h-134.4", "v-105.68" ] ],
+    [ "stepper1:B+", "drv1:1A", "green", [ "v19.2", "h-134.4", "v-105.68" ] ],
+    [ "stepper1:B-", "drv1:1B", "green", [ "v28.8", "h-134.41", "v-105.68" ] ],
+    [ "bb1:bn.10", "bb1:tn.10", "green", [ "v0" ] ],
+    [ "drv1:MS1", "bb1:tn.1", "green", [ "h105.6", "v182.5" ] ],
+    [ "drv1:MS2", "bb1:tn.2", "green", [ "h115.2", "v163.2", "h36.8" ] ],
+    [ "drv1:MS3", "bb1:tn.3", "green", [ "h124.8", "v144", "h36.8" ] ],
+    [ "drv1:SLEEP", "bb1:bp.6", "green", [ "v288", "h200" ] ],
+    [ "btn1:2.r", "btn2:2.r", "green", [ "v48.2", "h96" ] ],
+    [ "btn2:2.r", "btn3:2.r", "green", [ "v48.2", "h96" ] ],
+    [ "btn3:2.r", "btn4:2.r", "green", [ "v48.2", "h86.4" ] ],
+    [ "btn4:2.r", "bb1:bn.6", "green", [ "h19.4", "v-220.6", "h-270.4" ] ],
+    [ "btn1:1.l", "uno:2", "green", [ "h-470.4", "v-624", "h293.5" ] ],
+    [ "uno:3", "btn2:1.l", "green", [ "v-76.8", "h-255.2", "v576", "h537.6" ] ],
+    [ "uno:4", "btn3:1.l", "green", [ "v-86.4", "h-255.3", "v576", "h643.2" ] ],
+    [ "uno:5", "btn4:1.l", "green", [ "v-105.6", "h-255.4", "v585.6", "h739.2" ] ]
+  ],
+  "dependencies": {}
+}

@@ -1,0 +1,27 @@
+---
+ex_no: 1
+ex_title: Examination Alarm System
+date: 26/12/2025
+header-includes:
+  - \usepackage{needspace}
+  - \let\oldsubsection\subsection
+  - \renewcommand{\subsection}{\needspace{6\baselineskip}\oldsubsection}
+  - \usepackage{multirow}
+  - \usepackage{array}
+  - \def\exno{1}
+  - \def\extitle{Examination Alarm System}
+  - \def\exdate{26/12/2025}
+  - \pagestyle{empty}
+---
+
+\begin{center}
+\setlength{\arrayrulewidth}{0.5pt}
+\renewcommand{\arraystretch}{2.5}
+\begin{tabular}{|p{3cm}|>{\centering\arraybackslash}m{\dimexpr\linewidth-3cm-4\tabcolsep-3\arrayrulewidth\relax}|}
+\hline
+\centering \textbf{EX.NO: \exno} &
+\multirow{2}{=}{\centering\large\textbf{\MakeUppercase{\extitle}}} \\ \cline{1-1}
+\centering \textbf{\exdate} & \\ \hline
+\end{tabular}
+\end{center}
+

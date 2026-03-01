@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "author": "Shree Kottes",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 125.4, "left": -135, "attrs": {} },
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "matrix1",
+      "top": -18.6,
+      "left": -44.19,
+      "attrs": { "chain": "1" }
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -176,
+      "left": -128.8,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-analog-joystick",
+      "id": "joystick1",
+      "top": -173.4,
+      "left": 226.2,
+      "attrs": {}
+    },
+    { "type": "wokwi-membrane-keypad", "id": "keypad1", "top": -2, "left": 216.8, "attrs": {} }
+  ],
+  "connections": [
+    [ "lcd1:GND", "uno:GND.1", "black", [ "h-57.6", "v259.2", "h19.2" ] ],
+    [ "lcd1:VCC", "uno:5V", "red", [ "h-76.8", "v489.7", "h220.8", "v9.6" ] ],
+    [ "lcd1:SDA", "uno:A4", "green", [ "h-86.4", "v489.8", "h9.6" ] ],
+    [ "lcd1:SCL", "uno:A5", "green", [ "h-105.6", "v509.1", "h38.4" ] ],
+    [ "matrix1:GND", "uno:GND.1", "black", [ "h19.2", "v105.6", "h-105.6" ] ],
+    [ "matrix1:DIN", "uno:11", "green", [ "h28.8", "v105.6", "h-86.4" ] ],
+    [ "matrix1:CLK", "uno:13", "green", [ "h48", "v67.2", "h-124.8", "v-9.6" ] ],
+    [ "matrix1:CS", "uno:10", "green", [ "h67.2", "v67.2", "h-115.2" ] ],
+    [ "joystick1:GND", "uno:GND.1", "black", [ "v28.8", "h-172.8", "v144", "h-144" ] ],
+    [ "joystick1:VCC", "uno:5V", "red", [ "v19.2", "h-86.4", "v374.4", "h-144" ] ],
+    [ "keypad1:R1", "uno:9", "green", [ "v28.8", "h-124.8", "v-278.4", "h0" ] ],
+    [ "keypad1:R2", "uno:8", "green", [ "v38.4", "h-173.2", "v-297.6", "h-115.2" ] ],
+    [ "keypad1:R3", "uno:7", "green", [ "v19.2", "h-134.7", "v-288", "h-144" ] ],
+    [ "keypad1:R4", "uno:6", "green", [ "v57.6", "h-163.4", "v-336", "h-115.2" ] ],
+    [ "keypad1:C1", "uno:5", "green", [ "v67.2", "h-192.1", "v-355.2", "h-86.4" ] ],
+    [
+      "keypad1:C2",
+      "uno:4",
+      "green",
+      [ "v19.2", "h-124.8", "v-28.8", "h-48", "v-307.2", "h-86.4" ]
+    ],
+    [ "keypad1:C3", "uno:3", "green", [ "v96", "h-220.95", "v-422.4", "h-57.6" ] ],
+    [ "keypad1:C4", "uno:2", "green", [ "v48", "h-182.7", "v-384", "h-96" ] ],
+    [ "joystick1:HORZ", "uno:A0", "green", [ "v48", "h278.4", "v489.6", "h-556.8", "v19.2" ] ],
+    [ "joystick1:VERT", "uno:A1", "green", [ "v48", "h-76.8", "v480", "h-9.6" ] ],
+    [ "matrix1:V+", "uno:5V", "green", [ "h0", "v-28.8", "h-230.4", "v364.8", "h172.8" ] ]
+  ],
+  "dependencies": {}
+}
