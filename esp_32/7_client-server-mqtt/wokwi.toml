@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = './build/7_client-server-mqtt.ino.bin'
+elf = './build/7_client-server-mqtt.ino.elf'
+

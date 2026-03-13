@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "author": "SmartParking",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp1", "top": 460, "left": -220, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "sr1", "top":   0, "left": -320, "attrs": { "distance": "150" } },
+    { "type": "wokwi-hc-sr04", "id": "sr2", "top":   0, "left": -100, "attrs": { "distance": "10"  } },
+    { "type": "wokwi-hc-sr04", "id": "sr3", "top": 130, "left": -320, "attrs": { "distance": "180" } },
+    { "type": "wokwi-hc-sr04", "id": "sr4", "top": 130, "left": -100, "attrs": { "distance": "200" } },
+    { "type": "wokwi-hc-sr04", "id": "sr5", "top": 260, "left": -320, "attrs": { "distance": "160" } },
+    { "type": "wokwi-hc-sr04", "id": "sr6", "top": 260, "left": -100, "attrs": { "distance": "8"   } }
+  ],
+  "connections": [
+    [ "sr1:VCC", "esp1:3V3", "red", [] ], [ "sr1:GND", "esp1:GND.1", "black", [] ],
+    [ "sr1:TRIG", "esp1:12", "green", [] ], [ "sr1:ECHO", "esp1:14", "blue", [] ],
+    [ "sr2:VCC", "esp1:3V3", "red", [] ], [ "sr2:GND", "esp1:GND.1", "black", [] ],
+    [ "sr2:TRIG", "esp1:13", "green", [] ], [ "sr2:ECHO", "esp1:35", "blue", [] ],
+    [ "sr3:VCC", "esp1:3V3", "red", [] ], [ "sr3:GND", "esp1:GND.1", "black", [] ],
+    [ "sr3:TRIG", "esp1:25", "green", [] ], [ "sr3:ECHO", "esp1:34", "blue", [] ],
+    [ "sr4:VCC", "esp1:3V3", "red", [] ], [ "sr4:GND", "esp1:GND.2", "black", [] ],
+    [ "sr4:TRIG", "esp1:26", "green", [] ], [ "sr4:ECHO", "esp1:32", "blue", [] ],
+    [ "sr5:VCC", "esp1:3V3", "red", [] ], [ "sr5:GND", "esp1:GND.2", "black", [] ],
+    [ "sr5:TRIG", "esp1:27", "green", [] ], [ "sr5:ECHO", "esp1:4", "blue", [] ],
+    [ "sr6:VCC", "esp1:3V3", "red", [] ], [ "sr6:GND", "esp1:GND.2", "black", [] ],
+    [ "sr6:TRIG", "esp1:33", "green", [] ], [ "sr6:ECHO", "esp1:17", "blue", [] ]
+  ],
+  "dependencies": {}
+}
