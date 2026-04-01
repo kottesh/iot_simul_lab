@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe · MQTT</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+  /* ── Reset & Base ─────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0f1117;
+    --surface: #1a1d27;
+    --card:    #22263a;
+    --border:  #2e3350;
+    --accent:  #6c63ff;
+    --accent2: #ff6584;
+    --green:   #43d98c;
+    --text:    #e8eaf0;
+    --muted:   #7b80a0;
+    --x-col:   #6c63ff;
+    --o-col:   #ff6584;
+    --radius:  14px;
+    --trans:   0.22s ease;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ── Screens ──────────────────────────────── */
+  .screen { display: none; width: 100%; max-width: 440px; }
+  .screen.active { display: flex; flex-direction: column; gap: 20px; }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.5px;
+  }
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: -12px;
+  }
+
+  /* ── Card ─────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  label { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color var(--trans);
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+
+  /* ── Mode toggle ──────────────────────────── */
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mode-btn {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--trans);
+  }
+  .mode-btn.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(108,99,255,0.08);
+  }
+  .mode-btn span { display: block; font-size: 22px; margin-bottom: 4px; }
+
+  /* ── Buttons ──────────────────────────────── */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--trans);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; filter: none; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  .btn-sm {
+    width: auto;
+    padding: 7px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .btn-invite {
+    background: rgba(108,99,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(108,99,255,0.35);
+  }
+  .btn-invite:hover { background: rgba(108,99,255,0.22); }
+
+  /* ── Status badge ─────────────────────────── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .dot.connected { background: var(--green); animation: pulse 2s infinite; }
+  .dot.error     { background: var(--accent2); }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+
+  /* ── Lobby player list ────────────────────── */
+  .player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .player-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .player-info { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(108,99,255,0.2);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .player-name  { font-size: 14px; font-weight: 600; }
+  .player-meta  { font-size: 11px; color: var(--muted); }
+  .empty-state  { text-align: center; color: var(--muted); font-size: 14px; padding: 24px 0; }
+
+  /* ── Board ────────────────────────────────── */
+  .board-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 310px;
+  }
+  .cell {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-size: 42px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all var(--trans);
+    user-select: none;
+  }
+  .cell:hover:not(.taken):not(.disabled) {
+    background: rgba(108,99,255,0.08);
+    border-color: var(--accent);
+  }
+  .cell.taken    { cursor: default; }
+  .cell.disabled { cursor: not-allowed; opacity: 0.6; }
+  .cell.x-cell   { color: var(--x-col); }
+  .cell.o-cell   { color: var(--o-col); }
+  .cell.win-cell {
+    background: rgba(108,99,255,0.15);
+    border-color: var(--accent);
+    animation: winPulse 0.6s ease;
+  }
+  .cell.win-cell.o-cell {
+    background: rgba(255,101,132,0.15);
+    border-color: var(--accent2);
+  }
+  @keyframes winPulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── Turn/status indicator ────────────────── */
+  .turn-info {
+    text-align: center;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    width: 100%;
+    max-width: 310px;
+  }
+  .turn-info .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .turn-info .value { font-size: 16px; font-weight: 700; }
+  .turn-info.my-turn   { border-color: var(--green); }
+  .turn-info.opp-turn  { border-color: var(--border); }
+  .turn-info.game-over { border-color: var(--accent); }
+
+  /* ── Result overlay ───────────────────────── */
+  .result-banner {
+    display: none;
+    text-align: center;
+    background: var(--card);
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 20px;
+    gap: 10px;
+    flex-direction: column;
+    align-items: center;
+  }
+  .result-banner.show { display: flex; }
+  .result-emoji { font-size: 48px; }
+  .result-text  { font-size: 20px; font-weight: 700; }
+  .result-sub   { font-size: 13px; color: var(--muted); }
+
+  /* ── Score row ────────────────────────────── */
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 310px;
+  }
+  .score-player {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    text-align: center;
+  }
+  .score-player .sym  { font-size: 20px; font-weight: 800; }
+  .score-player .nm   { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .score-player .pts  { font-size: 22px; font-weight: 800; color: var(--text); }
+  .score-vs { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+  /* ── Invite toast ─────────────────────────── */
+  #invite-toast {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1.5px solid var(--accent);
+    border-radius: 14px;
+    padding: 16px 20px;
+    min-width: 280px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 100;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #invite-toast.show { display: flex; }
+  #invite-toast .toast-title { font-weight: 700; font-size: 15px; }
+  #invite-toast .toast-sub   { color: var(--muted); font-size: 13px; }
+  .toast-btns { display: flex; gap: 8px; }
+
+  /* ── Utils ────────────────────────────────── */
+  .row-between {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCREEN 1: Setup                            -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="screen-setup" class="screen active">
+  <h1>Tic<span>Tac</span>Toe</h1>
+  <p class="subtitle">Powered by MQTT · ESP32</p>
+
+  <div class="status-bar" style="justify-content:center">
+    <div class="dot" id="conn-dot"></div>
+    <span id="conn-label">Connecting to broker…</span>
+  </div>
+
+  <div class="card">
+    <label>Your display name</label>
+    <input type="text" id="input-name" placeholder="e.g. Alice" maxlength="20">
+
+    <label>Game mode</label>
+    <div class="mode-toggle">
+      <div class="mode-btn selected" data-mode="ai" onclick="selectMode('ai')">
+        <span>🤖</span>Play vs AI
+      </div>
+      <div class="mode-btn" data-mode="human" onclick="selectMode('human')">
+        <span>🧑‍🤝‍🧑</span>Human vs Human
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="btn-start" disabled onclick="startGame()">
+    Start Game
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCREEN 2: Lobby (Human mode)               -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="row-between">
+    <h1 style="font-size:20px">Lobby</h1>
+    <button class="btn btn-ghost btn-sm" onclick="leaveLobby()">← Back</button>
+  </div>
+
+  <div class="card" style="gap:8px; padding:14px 16px">
+    <div class="status-bar">
+      <div class="dot connected"></div>
+      <span>Playing as <strong id="lobby-name"></strong> · <span style="color:var(--accent)" id="lobby-pid"></span></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row-between">
+      <span class="section-title">Online Players</span>
+      <span id="player-count" style="font-size:12px;color:var(--muted)">0 online</span>
+    </div>
+    <div class="player-list" id="player-list">
+      <div class="empty-state">Waiting for players…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SCREEN 3: Game Board                       -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <div class="row-between">
+    <h1 style="font-size:20px">Game</h1>
+    <button class="btn btn-ghost btn-sm" onclick="quitGame()">Quit</button>
+  </div>
+
+  <!-- Result banner (hidden until game over) -->
+  <div class="result-banner" id="result-banner">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-text"  id="result-text">You win!</div>
+    <div class="result-sub"   id="result-sub"></div>
+    <div style="display:flex;gap:8px;width:100%;margin-top:4px">
+      <button class="btn btn-primary" onclick="rematch()">Rematch</button>
+      <button class="btn btn-ghost"   onclick="quitGame()">Menu</button>
+    </div>
+  </div>
+
+  <!-- Turn indicator -->
+  <div class="board-wrap">
+    <div class="turn-info" id="turn-info">
+      <div class="label">Current turn</div>
+      <div class="value" id="turn-value">—</div>
+    </div>
+
+    <!-- Score -->
+    <div class="score-row">
+      <div class="score-player">
+        <div class="sym" style="color:var(--x-col)">X</div>
+        <div class="nm" id="score-p1-name">You</div>
+        <div class="pts" id="score-p1">0</div>
+      </div>
+      <div class="score-vs">VS</div>
+      <div class="score-player">
+        <div class="sym" style="color:var(--o-col)">O</div>
+        <div class="nm" id="score-p2-name">AI</div>
+        <div class="pts" id="score-p2">0</div>
+      </div>
+    </div>
+
+    <!-- Board -->
+    <div class="board" id="board"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  Invite Toast                               -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="invite-toast">
+  <div class="toast-title" id="toast-title">Incoming invite</div>
+  <div class="toast-sub"   id="toast-sub"></div>
+  <div class="toast-btns">
+    <button class="btn btn-primary btn-sm" onclick="respondInvite(true)">Accept</button>
+    <button class="btn btn-ghost   btn-sm" onclick="respondInvite(false)">Decline</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  Config
+// ═══════════════════════════════════════════════
+const BROKER_WS = "ws://100.64.0.1:9001";
+
+// ── State ──────────────────────────────────────
+let client    = null;
+let myPid     = localStorage.getItem("ttt_pid") || genUUID();
+let myName    = "";
+let gameMode  = "ai";      // "ai" | "human"
+let gid       = null;
+let mySymbol  = "";        // "X" | "O"
+let opponentPid  = "";
+let opponentName = "";
+let boardState   = Array(9).fill("");
+let myTurn       = false;
+let gameOver     = false;
+let pendingInvite = null;  // { from_pid, from_name }
+let scores = { p1: 0, p2: 0 };
+
+localStorage.setItem("ttt_pid", myPid);
+
+// ── Helpers ────────────────────────────────────
+function genUUID() {
+  return Math.random().toString(36).substr(2, 6) +
+         Math.random().toString(36).substr(2, 6);
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function selectMode(mode) {
+  gameMode = mode;
+  document.querySelectorAll(".mode-btn").forEach(b => {
+    b.classList.toggle("selected", b.dataset.mode === mode);
+  });
+}
+
+function updateConnStatus(state) {
+  const dot   = document.getElementById("conn-dot");
+  const label = document.getElementById("conn-label");
+  if (state === "connected") {
+    dot.className = "dot connected";
+    label.textContent = "Connected to broker";
+    document.getElementById("btn-start").disabled = false;
+  } else if (state === "error") {
+    dot.className = "dot error";
+    label.textContent = "Connection failed — check broker";
+    document.getElementById("btn-start").disabled = true;
+  } else {
+    dot.className = "dot";
+    label.textContent = "Connecting…";
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MQTT
+// ═══════════════════════════════════════════════
+function connectMQTT() {
+  const clientId = "web-" + myPid;
+  client = mqtt.connect(BROKER_WS, {
+    clientId,
+    clean: true,
+    reconnectPeriod: 3000,
+    connectTimeout: 8000,
+    will: {
+      topic: `ttt/lobby/leave/${myPid}`,
+      payload: JSON.stringify({ pid: myPid }),
+      qos: 0,
+      retain: false
+    }
+  });
+
+  client.on("connect", () => {
+    console.log("[MQTT] Connected");
+    updateConnStatus("connected");
+
+    // Subscribe to personal topics (always)
+    client.subscribe(`ttt/game/${myPid}/created`);
+    client.subscribe(`ttt/lobby/invite/${myPid}`);
+    client.subscribe("ttt/sys/players/online");
+    client.subscribe("ttt/sys/server");
+  });
+
+  client.on("error",      e  => { console.error("[MQTT]", e); updateConnStatus("error"); });
+  client.on("offline",    () => updateConnStatus("connecting"));
+  client.on("reconnect",  () => updateConnStatus("connecting"));
+  client.on("message",    onMessage);
+}
+
+function sub(topic)   { client.subscribe(topic); }
+function unsub(topic) { client.unsubscribe(topic); }
+function pub(topic, payload) {
+  client.publish(topic, JSON.stringify(payload));
+}
+
+function onMessage(topic, rawPayload) {
+  let msg;
+  try { msg = JSON.parse(rawPayload.toString()); }
+  catch(e) { return; }
+  console.log("[SUB]", topic, msg);
+
+  // ── Game created (AI or PvP accepted) ──────
+  if (topic === `ttt/game/${myPid}/created`) {
+    if (msg.accepted === false) {
+      alert(`${msg.from_name} declined your invite.`);
+      return;
+    }
+    gid          = msg.gid;
+    mySymbol     = msg.symbol;
+    opponentPid  = msg.opponent_pid;
+    opponentName = msg.opponent_name;
+    myTurn       = (mySymbol === "X");
+    gameOver     = false;
+    scores       = { p1: 0, p2: 0 };
+
+    sub(`ttt/game/${gid}/state`);
+    sub(`ttt/game/${gid}/result`);
+
+    initBoard();
+    updateScoreUI();
+    showScreen("screen-game");
+    return;
+  }
+
+  // ── Board state update ─────────────────────
+  if (topic === `ttt/game/${gid}/state`) {
+    boardState = msg.board;
+    myTurn     = (msg.turn === myPid);
+    renderBoard([], false);
+    updateTurnUI();
+    return;
+  }
+
+  // ── Game result ────────────────────────────
+  if (topic === `ttt/game/${gid}/result`) {
+    gameOver = true;
+    let winCells = [];
+    if (msg.winning_cells)
+      winCells = msg.winning_cells.split(",").map(Number);
+
+    renderBoard(winCells, true);
+    showResult(msg);
+    return;
+  }
+
+  // ── Online players ─────────────────────────
+  if (topic === "ttt/sys/players/online") {
+    console.log("[DEBUG] Players received:", msg.players);
+    console.log("[DEBUG] My PID:", myPid);
+    renderLobby(msg.players || []);
+    return;
+  }
+
+  // ── Incoming invite ────────────────────────
+  if (topic === `ttt/lobby/invite/${myPid}`) {
+    showInviteToast(msg.from_pid, msg.from_name);
+    return;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Screen: Setup
+// ═══════════════════════════════════════════════
+function startGame() {
+  myName = document.getElementById("input-name").value.trim();
+  if (!myName) { alert("Enter your name"); return; }
+
+  // Announce presence
+  pub("ttt/lobby/announce", { pid: myPid, name: myName, client: "web" });
+
+  if (gameMode === "ai") {
+    pub("ttt/game/new", { pid: myPid, name: myName, mode: "ai" });
+    // Wait for "created" message → board will appear
+  } else {
+    document.getElementById("lobby-name").textContent = myName;
+    document.getElementById("lobby-pid").textContent  = myPid.substring(0,6);
+    showScreen("screen-lobby");
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  Screen: Lobby
+// ═══════════════════════════════════════════════
+function renderLobby(players) {
+  const list = document.getElementById("player-list");
+  console.log("[DEBUG] renderLobby called with:", players);
+  const others = players.filter(p => p.pid !== myPid);
+  console.log("[DEBUG] After filtering (excluding", myPid, "):", others);
+  document.getElementById("player-count").textContent = others.length + " online";
+
+  if (others.length === 0) {
+    list.innerHTML = '<div class="empty-state">No other players yet… share the link!</div>';
+    return;
+  }
+  list.innerHTML = others.map(p => `
+    <div class="player-row">
+      <div class="player-info">
+        <div class="avatar">${p.name[0].toUpperCase()}</div>
+        <div>
+          <div class="player-name">${p.name}</div>
+          <div class="player-meta">${p.client} · ${p.pid.substring(0,6)}</div>
+        </div>
+      </div>
+      <button class="btn btn-invite btn-sm" onclick="invitePlayer('${p.pid}','${p.name}')">
+        Invite
+      </button>
+    </div>
+  `).join("");
+}
+
+function invitePlayer(targetPid, targetName) {
+  pub(`ttt/lobby/invite/${targetPid}`, {
+    from_pid:  myPid,
+    from_name: myName
+  });
+  alert(`Invite sent to ${targetName}! Waiting for response…`);
+}
+
+function leaveLobby() {
+  pub(`ttt/lobby/leave/${myPid}`, { pid: myPid });
+  showScreen("screen-setup");
+}
+
+// ── Invite toast ────────────────────────────────
+function showInviteToast(fromPid, fromName) {
+  pendingInvite = { from_pid: fromPid, from_name: fromName };
+  document.getElementById("toast-title").textContent = `${fromName} wants to play!`;
+  document.getElementById("toast-sub").textContent   = `PID: ${fromPid.substring(0,6)}`;
+  document.getElementById("invite-toast").classList.add("show");
+}
+
+function respondInvite(accepted) {
+  if (!pendingInvite) return;
+  document.getElementById("invite-toast").classList.remove("show");
+  pub(`ttt/lobby/response/${pendingInvite.from_pid}`, {
+    pid:      myPid,
+    name:     myName,
+    accepted: accepted
+  });
+  pendingInvite = null;
+}
+
+// ═══════════════════════════════════════════════
+//  Screen: Game Board
+// ═══════════════════════════════════════════════
+function initBoard() {
+  boardState = Array(9).fill("");
+  const board = document.getElementById("board");
+  board.innerHTML = Array(9).fill(0).map((_, i) =>
+    `<div class="cell" id="cell-${i}" onclick="handleCellClick(${i})"></div>`
+  ).join("");
+
+  // Score names
+  if (mySymbol === "X") {
+    document.getElementById("score-p1-name").textContent = myName;
+    document.getElementById("score-p2-name").textContent = opponentName;
+  } else {
+    document.getElementById("score-p1-name").textContent = opponentName;
+    document.getElementById("score-p2-name").textContent = myName;
+  }
+
+  document.getElementById("result-banner").classList.remove("show");
+  updateTurnUI();
+}
+
+function renderBoard(winCells = [], frozen = false) {
+  for (let i = 0; i < 9; i++) {
+    const cell = document.getElementById(`cell-${i}`);
+    if (!cell) continue;
+    const val = boardState[i];
+    cell.textContent = val;
+    cell.className   = "cell";
+    if (val === "X") cell.classList.add("x-cell", "taken");
+    if (val === "O") cell.classList.add("o-cell", "taken");
+    if (winCells.includes(i)) cell.classList.add("win-cell");
+    if (frozen || !myTurn || val !== "") cell.classList.add("disabled");
+  }
+}
+
+function handleCellClick(index) {
+  if (!myTurn || gameOver || boardState[index] !== "") return;
+  pub(`ttt/game/${gid}/move`, { player: myPid, cell: index });
+}
+
+function updateTurnUI() {
+  const info = document.getElementById("turn-info");
+  const val  = document.getElementById("turn-value");
+  if (myTurn) {
+    val.textContent      = "Your turn (" + mySymbol + ")";
+    val.style.color      = mySymbol === "X" ? "var(--x-col)" : "var(--o-col)";
+    info.className       = "turn-info my-turn";
+  } else {
+    val.textContent      = opponentName + "'s turn";
+    val.style.color      = "var(--muted)";
+    info.className       = "turn-info opp-turn";
+  }
+}
+
+function updateScoreUI() {
+  document.getElementById("score-p1").textContent = scores.p1;
+  document.getElementById("score-p2").textContent = scores.p2;
+}
+
+function showResult(msg) {
+  const banner = document.getElementById("result-banner");
+  const emoji  = document.getElementById("result-emoji");
+  const text   = document.getElementById("result-text");
+  const sub    = document.getElementById("result-sub");
+
+  document.getElementById("turn-info").className = "turn-info game-over";
+  document.getElementById("turn-value").textContent = "Game over";
+
+  if (msg.winner === "draw") {
+    emoji.textContent = "🤝";
+    text.textContent  = "It's a draw!";
+    sub.textContent   = "Nobody wins this round.";
+  } else if (msg.winner === myPid) {
+    emoji.textContent = "🎉";
+    text.textContent  = "You win!";
+    sub.textContent   = "You played " + mySymbol;
+    if (mySymbol === "X") scores.p1++; else scores.p2++;
+  } else {
+    emoji.textContent = "😔";
+    text.textContent  = opponentName + " wins!";
+    sub.textContent   = "Better luck next time.";
+    if (mySymbol === "X") scores.p2++; else scores.p1++;
+  }
+  updateScoreUI();
+  banner.classList.add("show");
+}
+
+function rematch() {
+  document.getElementById("result-banner").classList.remove("show");
+  unsub(`ttt/game/${gid}/state`);
+  unsub(`ttt/game/${gid}/result`);
+
+  if (gameMode === "ai") {
+    pub("ttt/game/new", { pid: myPid, name: myName, mode: "ai" });
+  } else {
+    // For PvP, go back to lobby to reinvite
+    quitGame();
+    showScreen("screen-lobby");
+  }
+}
+
+function quitGame() {
+  if (gid) {
+    unsub(`ttt/game/${gid}/state`);
+    unsub(`ttt/game/${gid}/result`);
+    gid = null;
+  }
+  gameOver = false;
+  showScreen("screen-setup");
+}
+
+// ═══════════════════════════════════════════════
+//  Boot
+// ═══════════════════════════════════════════════
+window.addEventListener("load", () => {
+  connectMQTT();
+
+  document.getElementById("input-name").addEventListener("input", e => {
+    document.getElementById("btn-start").disabled = !e.target.value.trim();
+  });
+  // Restore if btn was disabled just for empty name
+  updateConnStatus("connecting");
+});
+</script>
+</body>
+</html>
