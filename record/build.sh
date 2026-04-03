@@ -160,10 +160,15 @@ for md_file in "$EXERCISES_DIR"/*.md; do
 header-includes:
   - |
     \usepackage{needspace}
+    \let\oldsection\section
+    \renewcommand{\section}{\needspace{8\baselineskip}\oldsection}
     \let\oldsubsection\subsection
-    \renewcommand{\subsection}{\needspace{6\baselineskip}\oldsubsection}
+    \renewcommand{\subsection}{\needspace{8\baselineskip}\oldsubsection}
+    \let\oldsubsubsection\subsubsection
+    \renewcommand{\subsubsection}{\needspace{8\baselineskip}\oldsubsubsection}
     \usepackage{multirow}
     \usepackage{array}
+    \usepackage{graphicx}
     \usepackage{fvextra}
     \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\\\{\}}
   - \def\exno{$ex_no}
