@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "author": "Shree Kottes",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -9.6, "left": -158.36, "attrs": {} },
+    { "type": "wokwi-ir-receiver", "id": "ir1", "top": -20.55, "left": 65.42, "attrs": {} },
+    { "type": "wokwi-ir-remote", "id": "remote1", "top": -67.2, "left": 153.6, "attrs": {} },
+    {
+      "type": "wokwi-stepper-motor",
+      "id": "stepper1",
+      "top": -280,
+      "left": -350,
+      "attrs": { "display": "angle", "arrow": "orange", "size": "17" }
+    },
+    { "type": "wokwi-a4988", "id": "a4988", "top": -100, "left": -350, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "ir1:GND", "esp:GND.2", "black", [ "h-96", "v-48", "h-48" ] ],
+    [ "ir1:VCC", "esp:3V3", "red", [ "h48", "v-96", "h-297.75" ] ],
+    [ "ir1:DAT", "esp:15", "green", [ "v96", "h-163.2" ] ],
+    [ "a4988:STEP", "esp:33", "blue", [ "h-19.6", "v124" ] ],
+    [ "a4988:DIR", "esp:32", "green", [ "h-29.2", "v104.8" ] ],
+    [ "a4988:GND.1", "esp:GND.1", "black", [ "h57.35", "v172.08" ] ],
+    [ "a4988:VDD", "esp:3V3", "red", [ "h124.55", "v56.88" ] ],
+    [ "a4988:VMOT", "esp:5V", "red", [ "h114.95", "v287.28" ] ],
+    [ "a4988:GND.2", "esp:GND.2", "black", [] ],
+    [ "a4988:RESET", "a4988:SLEEP", "yellow", [] ],
+    [ "a4988:1B", "stepper1:B-", "orange", [] ],
+    [ "a4988:1A", "stepper1:B+", "orange", [] ],
+    [ "a4988:2A", "stepper1:A+", "violet", [] ],
+    [ "a4988:2B", "stepper1:A-", "violet", [] ]
+  ],
+  "dependencies": {}
+}

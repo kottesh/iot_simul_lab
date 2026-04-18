@@ -1,27 +1,3 @@
-/*
- * ═══════════════════════════════════════════════════════════════
- *  Tic-Tac-Toe MQTT Game Server — ESP32 (Wokwi)
- *
- *  Role  : Authoritative game server + AI engine
- *  Broker: 100.64.0.1:1883  (Tailscale VPC, via Wokwi Gateway)
- *
- *  Topic schema
- *  ────────────────────────────────────────────────
- *  SUB  ttt/game/new               Client creates a game session
- *  SUB  ttt/game/+/move            Client sends a move
- *  SUB  ttt/lobby/announce         Client announces presence
- *  SUB  ttt/lobby/invite/#         Client invites another player
- *  SUB  ttt/lobby/response/#       Client accepts/declines invite
- *
- *  PUB  ttt/game/{pid}/created     Notify client of new game + gid
- *  PUB  ttt/game/{gid}/state       Full board state after every move
- *  PUB  ttt/game/{gid}/result      Game over payload
- *  PUB  ttt/sys/players/online     Live player roster (retained)
- *  PUB  ttt/sys/heartbeat          Alive ping every 5 s
- *  PUB  ttt/sys/server             Server status (retained)
- * ═══════════════════════════════════════════════════════════════
- */
-
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
